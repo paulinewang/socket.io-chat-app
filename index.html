@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Socket.io Chat App</title>
+    <!-- Bootstrap v3.3.7 -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <!-- Load Lato and Raleway font -->
+    <link href="https://fonts.googleapis.com/css?family=Lato:100,300,400" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Raleway:100,200,300,400,500" rel="stylesheet">
+    <script
+    src="https://code.jquery.com/jquery-3.3.1.min.js"
+    integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+    crossorigin="anonymous"></script>
+    <script src="/socket.io/socket.io.js"></script>
+
+    <style>
+        body {
+            margin-top: 30px;
+            background: url("https://images.unsplash.com/photo-1493087670264-2f7f5844b402?ixlib=rb-0.3.5&ixid=eyJhcHBfaWQiOjE3MzYxfQ&s=b039015d8a1082a08c39b36c2c252ceb&auto=format&fit=crop&w=1498&q=80");
+            background-size: cover;
+            font-family: 'Raleway', sans-serif;
+            font-size: 18px;
+        }
+
+        #messageArea {
+            display: none;
+        }
+
+        #chat {
+            overflow: scroll;
+            height: 600px;
+            border: 3px solid white;
+            border-radius: 25px;
+            margin-bottom: 25px;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        h1 {
+            margin-top: 15%;
+            text-transform: uppercase;
+            font-size: 100px;
+            font-weight: 300;
+        }
+
+        h3 {
+            color: #000;
+        }
+
+        label {
+            text-transform: lowercase;
+        }
+
+        .well { 
+            margin: 10px 10px;
+        }
+
+        textarea { font-size: 18px; }
+        input { font-size: 18px; }
+
+        .btn-dark:active,
+        .btn-dark:default, 
+        .btn-dark:hover,
+        .btn-dark:focus,
+        .btn-dark:target {
+            color: #fff;
+            background-color: #000;
+        }
+
+        .style-white {
+            color: #fff;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <!-- USER FORM -->        
+        <div id="userFormArea" class="row">
+            <div class="col-md-12">
+                <h1 class="style-white">Chat App</h1>
+                    <form id="userForm">
+                        <div class="form-group">
+                            <input class="form-control input-lg" id="username" placeholder="enter your username here to enter the chatroom" required autofocus />
+                            <br />
+                            <input type="submit" class="btn btn-lg btn-dark" value="LOGIN" />
+                        </div>
+                    </form>
+            </div>
+        </div>
+
+        <!-- CHAT AREA -->
+        <div class="row" id="messageArea">
+            <!-- ONLINE USERS -->
+            <div class="col-md-4"> 
+                <div class="well">
+                    <h3>ONLINE USERS</h3>
+                    <ul class="list-group" id="users"></ul>
+                </div>
+            </div>
+
+            <!-- MESSAGES -->
+            <div>
+                <div class="col-md-8">
+                    <div class="chat" id="chat"></div>
+                    
+                    <form id="messageForm">
+                        <div class="form-group">
+                            <!-- <label class="style-white">Enter message</label> -->
+                            <textarea class="form-control" id="message" placeholder="type your message here.."></textarea>
+                            <br />
+                            <input type="submit" class="btn btn-lg btn-dark" value="SEND MESSAGE" /> 
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div> <!-- end of div row -->
+    </div> <!-- end of div container -->
+
+    <script>
+    $(function(){
+        var socket = io.connect();
+        var $messageForm = $('#messageForm');
+        var $message = $('#message');
+        var $chat = $('#chat');
+        var $messageArea = $('#messageArea');
+        var $userFormArea = $('#userFormArea');
+        var $userForm = $('#userForm');
+        var $users = $('#users');
+        var $username = $('#username');
+
+        $messageForm.submit(function(e){
+            e.preventDefault();
+            socket.emit('send message', $message.val());
+            $message.val('');
+        });
+
+        socket.on('new message', function(data){
+            $chat.append('<div class="well"><strong>' + data.user + '</strong>: ' + data.msg + '</div>');
+        });
+
+        $userForm.submit(function(e){
+            e.preventDefault();
+            socket.emit('new user', $username.val(), function(data){
+                if(data){
+                    $userFormArea.hide();
+                    $messageArea.show();
+                }
+            });
+            $username.val('');
+        });
+
+        socket.on('get users', function(data){
+            var html = '';
+            for(i = 0; i < data.length; i++) {
+                html += '<li class="list-group-item">' + data[i] + '</li>';
+            }
+            $users.html(html);
+        });
+    });
+    </script>
+</body>
+</html>
